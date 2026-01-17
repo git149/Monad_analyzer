@@ -152,6 +152,11 @@ class UniqueEOAAnalyzer:
             print(f"  [OK] Smart Money/Bots: {smart_money_count}")
             print(f"  [OK] Score: {score}/40")
 
+            # 获取用户类型分布
+            user_types = eoa_stats.get("user_types", {})
+            dex_pool_count = eoa_stats.get("dex_pool_count", 0)
+            bot_count = eoa_stats.get("bot_count", 0)
+
             return {
                 "unique_eoa_count": unique_eoa_count,
                 "unique_eoa_list": [],  # 不返回列表以节省内存
@@ -159,6 +164,9 @@ class UniqueEOAAnalyzer:
                 "contract_addresses": contract_count,
                 "eoa_percentage": eoa_stats["eoa_ratio"],
                 "smart_money_count": smart_money_count,
+                "dex_pool_count": dex_pool_count,
+                "bot_count": bot_count,
+                "user_types": user_types,
                 "score": score,
                 "max_score": 40.0,
                 "risk_level": risk_level,

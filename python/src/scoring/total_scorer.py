@@ -445,7 +445,11 @@ class TotalScorer:
                         "unique_eoa_count": eoa_result.get("unique_eoa_count", 0),
                         "total_addresses": eoa_result.get("total_addresses", 0),
                         "eoa_percentage": round(eoa_result.get("eoa_percentage", 0), 2),
-                        "events_count": eoa_result.get("events_count", 0)
+                        "events_count": eoa_result.get("events_count", 0),
+                        "smart_money_count": eoa_result.get("smart_money_count", 0),
+                        "dex_pool_count": eoa_result.get("dex_pool_count", 0),
+                        "bot_count": eoa_result.get("bot_count", 0),
+                        "user_types": eoa_result.get("user_types", {})
                     }
                 },
                 # 持有者集中度分析

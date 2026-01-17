@@ -378,7 +378,7 @@ class NansenClient:
         fetch_all: bool = False
     ) -> Dict[str, Any]:
         """
-        统计代币的独立 EOA 数量 (用于 EOA 活跃度评分)
+        统计代币的独立 EOA 数量和用户类型分布 (用于 EOA 活跃度评分)
 
         Args:
             contract_address: 代币合约地址
@@ -390,8 +390,16 @@ class NansenClient:
                 "unique_eoa_count": 独立 EOA 数量,
                 "total_addresses": 总地址数量,
                 "eoa_ratio": EOA 占比 (0-100),
-                "smart_money_count": 聪明钱/机器人数量,
-                "holders_analyzed": 分析的持有者数量
+                "smart_money_count": 聪明钱数量,
+                "dex_pool_count": DEX/Pool 数量,
+                "bot_count": 机器人数量,
+                "holders_analyzed": 分析的持有者数量,
+                "user_types": {
+                    "real_users": { "count": x, "percentage": y },
+                    "smart_money": { "count": x, "percentage": y },
+                    "dex_pool": { "count": x, "percentage": y },
+                    "bots": { "count": x, "percentage": y }
+                }
             }
         """
         if fetch_all:
@@ -415,16 +423,84 @@ class NansenClient:
                 page += 1
             holders = holders[:limit]
 
-        eoa_count = sum(1 for h in holders if h.is_eoa)
-        smart_money_count = sum(1 for h in holders if h.is_smart_money)
         total = len(holders)
+        if total == 0:
+            return {
+                "unique_eoa_count": 0,
+                "total_addresses": 0,
+                "eoa_ratio": 0,
+                "smart_money_count": 0,
+                "dex_pool_count": 0,
+                "bot_count": 0,
+                "holders_analyzed": 0,
+                "user_types": {
+                    "real_users": {"count": 0, "percentage": 0},
+                    "smart_money": {"count": 0, "percentage": 0},
+                    "dex_pool": {"count": 0, "percentage": 0},
+                    "bots": {"count": 0, "percentage": 0}
+                }
+            }
+
+        # 分类统计
+        eoa_count = 0
+        smart_money_count = 0
+        dex_pool_count = 0
+        bot_count = 0
+
+        for h in holders:
+            label = h.address_label.lower() if h.address_label else ""
+            label_raw = h.address_label if h.address_label else ""
+
+            # 检查是否包含机器人 emoji 🤖
+            has_bot_emoji = '🤖' in label_raw
+            # 检查是否包含交易所 emoji 🏦
+            has_cex_emoji = '🏦' in label_raw
+
+            # DEX/Pool 判断 (优先级最高)
+            if any(x in label for x in ['pool', 'liquidity', 'amm', 'uniswap', 'pancakeswap', 'kuru', 'curve', '3pool']):
+                dex_pool_count += 1
+            # CEX/交易所 判断 - 归类到 Smart Money
+            elif has_cex_emoji or any(x in label for x in ['bybit', 'bitget', 'coinbase', 'binance', 'okx', 'exchange', 'hot wallet']):
+                smart_money_count += 1
+            # Bot 判断 (包含 �� emoji 或关键词，但不是 pool)
+            elif has_bot_emoji or any(x in label for x in ['bot', 'mev', 'arbitrage', 'sniper', 'trading bot', 'gearbox', 'morpho', 'neverland', 'curvance', 'manifold']):
+                bot_count += 1
+            # Smart Money 判断
+            elif any(x in label for x in ['smart money', 'whale', 'millionaire', 'high balance', 'fund']):
+                smart_money_count += 1
+            # EOA (真实用户) - 没有特殊标签的地址
+            else:
+                eoa_count += 1
+
+        # 计算百分比
+        user_types = {
+            "real_users": {
+                "count": eoa_count,
+                "percentage": round(eoa_count / total * 100, 2)
+            },
+            "smart_money": {
+                "count": smart_money_count,
+                "percentage": round(smart_money_count / total * 100, 2)
+            },
+            "dex_pool": {
+                "count": dex_pool_count,
+                "percentage": round(dex_pool_count / total * 100, 2)
+            },
+            "bots": {
+                "count": bot_count,
+                "percentage": round(bot_count / total * 100, 2)
+            }
+        }
 
         return {
             "unique_eoa_count": eoa_count,
             "total_addresses": total,
-            "eoa_ratio": round(eoa_count / total * 100, 2) if total > 0 else 0,
+            "eoa_ratio": round(eoa_count / total * 100, 2),
             "smart_money_count": smart_money_count,
-            "holders_analyzed": total
+            "dex_pool_count": dex_pool_count,
+            "bot_count": bot_count,
+            "holders_analyzed": total,
+            "user_types": user_types
         }
 
     def is_available(self) -> bool:

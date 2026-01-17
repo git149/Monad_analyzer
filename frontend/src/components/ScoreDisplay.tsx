@@ -86,33 +86,21 @@ export default function ScoreDisplay({ data }: Props) {
   const status = getScoreStatus(overview.total_score)
 
   // 从后端获取真实数据
-  const eoaMetrics = scores.eoa.metrics
+  const eoaMetrics = scores.eoa.metrics as any
   const holderMetrics = scores.holder.metrics
 
   // 真实数据
   const totalAddresses = eoaMetrics.total_addresses || 0
-  const eoaPercentage = eoaMetrics.eoa_percentage || 0
-  const uniqueEoaCount = eoaMetrics.unique_eoa_count || 0
-  const contractCount = totalAddresses - uniqueEoaCount
 
-  // 计算用户类型分布（基于实际 EOA 数据）
-  // EOA 占比就是真实用户占比
-  const realUsersPercentage = eoaPercentage
-  // 合约地址占比（包含 DEX、Bot 等）
-  const contractPercentage = totalAddresses > 0 ? (contractCount / totalAddresses) * 100 : 0
+  // 从 Nansen API 获取的用户类型分布
+  const userTypes = eoaMetrics.user_types || {}
+  const realUsersPercentage = userTypes.real_users?.percentage || eoaMetrics.eoa_percentage || 0
+  const smartMoneyPercentage = userTypes.smart_money?.percentage || 0
+  const dexPoolPercentage = userTypes.dex_pool?.percentage || 0
+  const botsPercentage = userTypes.bots?.percentage || 0
 
-  // Smart Money 数据来自后端（如果有的话）
-  // 注意：后端 holder_result 中可能有 smart_money_count
-  const smartMoneyCount = (data as any).scores?.holder?.smart_money_count || 0
-  const smartMoneyPercentage = totalAddresses > 0 ? (smartMoneyCount / totalAddresses) * 100 : 0
-
-  // Bot 占比估算：非 EOA 地址中，除去 Smart Money 和已知 DEX
-  // 简化计算：合约地址占比的一部分
-  const dexPoolPercentage = Math.min(contractPercentage * 0.3, 10) // DEX/Pool 通常不超过 10%
-  const botsPercentage = Math.max(0, contractPercentage - dexPoolPercentage - smartMoneyPercentage)
-
-  // Bot 活动分析 - 使用合约地址占比作为参考
-  const botVolumeShare = contractPercentage
+  // Bot 活动分析 - 使用机器人占比
+  const botVolumeShare = botsPercentage + dexPoolPercentage
   const botStatus = botVolumeShare < 20 ? 'Organic' : botVolumeShare < 50 ? 'Moderate' : 'High Bot Activity'
   const botStatusCn = botVolumeShare < 20 ? '自然' : botVolumeShare < 50 ? '中等' : '高机器人活动'
 
