@@ -6,6 +6,10 @@ Monad Hackathon 的链上项目评分协议（On-chain Project Scoring Protocol�
 
 本项目旨在通过分析链上行为而非营销材料，为 Web3 项目提供客观、可验证的风险评分，帮助投资者识别潜在的 Rug Pull 和中心化风险。
 
+https://analyzer-ebon-nu.vercel.app/
+![18d89dd9e807a8218d0f619199b49dff](https://github.com/user-attachments/assets/80b4952c-49cb-471a-86d5-dce9959c3843)
+
+
 ## 技术栈
 
 ### 区块链层 (Solidity)
